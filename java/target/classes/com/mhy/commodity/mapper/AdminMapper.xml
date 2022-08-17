@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mhy.commodity.mapper.AdminMapper">
+    <select id="queryAdminList" resultType="admin">
+        select id, admin_code, admin_password, admin_name, sex, birthday, phone, address, admin_role
+        from t_admin limit #{begin},#{pageSize}
+    </select>
+
+    <select id="searchAdminList" resultType="admin" parameterType="map">
+        select id, admin_code, admin_password, admin_name, sex, birthday, phone, address, admin_role
+        from t_admin
+        <where>
+            <if test="map.searchAdminRole != null and map.searchAdminRole != ''">
+                admin_role=#{map.searchAdminRole}
+            </if>
+            <if test="map.searchAdminName != null and map.searchAdminName != ''">
+                and admin_name=#{map.searchAdminName}
+            </if>
+        </where>
+        limit #{map.begin},#{map.pageSize}
+    </select>
+
+    <select id="queryAdminsTotalCount" resultType="int">
+        select count(*) from t_admin
+        <where>
+            <if test="adminName != null and adminName != ''">
+                admin_name=#{adminName}
+            </if>
+            <if test="adminRole != null and adminRole != ''">
+                and admin_role=#{adminRole}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryAdminCodeExist" resultType="String">
+        select admin_code from t_admin where admin_code=#{adminCode}
+    </select>
+
+    <insert id="addAdmin" parameterType="Admin">
+        insert into `t_admin`(admin_code,admin_password,admin_name,sex,birthday,phone,address,admin_role)
+        VALUES
+        (#{adminCode},#{adminPassword},#{adminName},#{sex},#{birthday},#{phone},#{address},#{adminRole})
+    </insert>
+
+    <update id="updateAdminById" parameterType="Admin">
+        update t_admin
+        set  admin_code=#{adminCode},
+            <if test="adminPassword != '' and adminPassword != null">
+                admin_password=${adminPassword},
+            </if>
+            admin_name=#{adminName},
+            birthday=#{birthday},
+            phone=#{phone},
+            sex=${sex},
+            address=#{address},
+            admin_role=${adminRole}
+        where id=#{id};
+    </update>
+
+    <delete id="deleteAdminById" >
+        delete from t_admin where id=#{id}
+    </delete>
+
+    <select id="queryAllCounts" resultType="int">
+        select count(*) from t_admin
+    </select>
+
+    <select id="login" resultType="admin">
+        select id, admin_code, admin_password, admin_name, sex,
+               birthday, phone, address, admin_role from t_admin
+        where admin_code=#{adminCode} and admin_password=#{adminPassword}
+    </select>
+
+</mapper>

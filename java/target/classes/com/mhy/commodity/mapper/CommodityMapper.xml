@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mhy.commodity.mapper.CommodityMapper">
+    <select id="searchCommodities" resultType="commodity">
+        select commodity_code, commodity_name, specification, model, unit,
+               market_price, sales_price, cost_price, commodity_url, commodity_introduce,
+               inventory_count, brand_code from t_commodity
+        where commodity_name like CONCAT(CONCAT('%',#{searchCommodityName}),'%')
+        limit 0,8
+    </select>
+
+    <select id="queryCommodities" resultType="commodity" parameterType="map">
+        select commodity_code, commodity_name, specification, model, unit, market_price,
+               sales_price, cost_price, commodity_url, commodity_introduce, inventory_count, brand_code
+        from t_commodity
+        <where>
+            <if test="searchCommodityName != null and searchCommodityName != ''">
+                commodity_name like CONCAT(CONCAT('%',#{searchCommodityName}),'%')
+            </if>
+        </where>
+        limit #{begin},#{pageSize}
+    </select>
+
+    <select id="queryCommoditiesTotalCount" parameterType="map" resultType="int">
+        select count(*) from t_commodity
+        <where>
+            <if test="searchCommodityName != null and searchCommodityName != ''">
+                commodity_name like CONCAT(CONCAT('%',#{searchCommodityName}),'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="isCommodityExistByCommodityCode" resultType="int">
+        select count(commodity_code) from t_commodity where commodity_code=#{commodityCode}
+    </select>
+
+    <insert id="addCommodity" parameterType="commodity">
+        insert into t_commodity(commodity_code, commodity_name, specification, model, unit,
+                                market_price, sales_price, cost_price, commodity_url, commodity_introduce,
+                                inventory_count, brand_code)
+        values(#{commodityCode},#{commodityName},#{specification},#{model},#{unit},#{marketPrice},#{salesPrice},
+               #{costPrice},#{commodityUrl},#{commodityIntroduce},#{inventoryCount},#{brand.brandCode})
+    </insert>
+
+    <insert id="addCommodityAndVendors">
+        insert into commodity_with_vendor(commodity_code, vendor_code) values
+        <foreach collection="vendorCodes" item="vendorCode" index="index" separator=",">
+            (#{commodityCode},#{vendorCode})
+        </foreach>
+    </insert>
+
+    <insert id="addCommodityAndClassifies">
+        insert into commodity_with_classify(commodity_code, classify_id) values
+        <foreach collection="classifyIds" item="classifyId" index="index" separator=",">
+            (#{commodityCode},#{classifyId})
+        </foreach>
+    </insert>
+
+    <select id="queryCommodityByCommodityCode" resultMap="commodityVendorClassify">
+        select tc.commodity_code, tc.commodity_name, tc.specification, tc.model, tc.unit, tc.market_price, tc.sales_price,
+               tc.cost_price, tc.commodity_url, tc.commodity_introduce, tc.inventory_count, tc.brand_code ,
+               tcb.brand_code, brand_name, brand_url, brand_img_url,
+               tcv.vendor_code, vendor_name, contact, phone, brief_introduction, vendor_url,
+               tcc.classify_id, img_url, name
+        from
+        t_commodity as tc left join commodity_with_vendor cwv on tc.commodity_code = cwv.commodity_code
+        left join t_commodity_vendor tcv on cwv.vendor_code = tcv.vendor_code
+        left join t_commodity_brand tcb on tc.brand_code = tcb.brand_code
+        left join commodity_with_classify cwc on tc.commodity_code = cwc.commodity_code
+        left join t_commodity_classify tcc on cwc.classify_id = tcc.classify_id
+        where tc.commodity_code=#{commodityCode}
+    </select>
+    <resultMap id="commodityVendorClassify" type="commodity">
+        <id property="commodityCode" column="commodity_code"/>
+        <result property="commodityName" column="commodity_name"/>
+        <result property="specification" column="specification"/>
+        <result property="model" column="model"/>
+        <result property="unit" column="unit"/>
+        <result property="marketPrice" column="market_price"/>
+        <result property="salesPrice" column="sales_price"/>
+        <result property="costPrice" column="cost_price"/>
+        <result property="commodityUrl" column="commodity_url"/>
+        <result property="commodityIntroduce" column="commodity_introduce"/>
+        <result property="inventoryCount" column="inventory_count"/>
+        <collection property="brand" ofType="brand">
+            <id property="brandCode" column="brand_code"/>
+            <result property="brandName" column="brand_name"/>
+        </collection>
+        <collection property="vendors" ofType="vendor">
+            <id property="vendorCode" column="vendor_code"/>
+            <result property="vendorName" column="vendor_name"/>
+            <result property="contact" column="contact"/>
+            <result property="phone" column="phone"/>
+        </collection>
+        <collection property="classifies" ofType="classify">
+            <id property="classifyId" column="classify_id"/>
+            <result property="name" column="name"/>
+        </collection>
+    </resultMap>
+
+    <update id="updateCommodityByCommodityCode">
+        update t_commodity set
+        commodity_name=#{commodityName},
+        specification=#{specification},
+        model=#{model},
+        unit=#{unit},
+        market_price=#{marketPrice},
+        sales_price=#{salesPrice},
+        cost_price=#{costPrice},
+        commodity_url=#{commodityUrl},
+        commodity_introduce=#{commodityIntroduce},
+        inventory_count=#{inventoryCount},
+        brand_code=#{brand.brandCode}
+        where commodity_code = #{commodityCode}
+    </update>
+
+    <delete id="deleteCommodityWithVendor">
+        delete from commodity_with_vendor where
+        commodity_code=#{commodityCode}
+        <if test="vendorCode != null and vendorCode!= ''">
+            and vendor_code=#{vendorCode}
+        </if>
+
+    </delete>
+
+    <delete id="deleteCommodityWithClassify">
+        delete from commodity_with_classify where
+        commodity_code=#{commodityCode}
+        <if test="classifyId != null and classifyId != ''">
+            and classify_id=#{classifyId}
+        </if>
+    </delete>
+
+    <delete id="deleteCommodityByCommodityCode">
+        delete from t_commodity where commodity_code=#{commodityCode}
+    </delete>
+
+    <select id="queryAllCounts" resultType="int">
+        select count(*) from t_commodity
+    </select>
+
+</mapper>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mhy.commodity.mapper.BrandMapper">
+
+    <select id="queryBrands" resultType="brand" parameterType="map">
+        select brand_code, brand_name, brand_url, brand_img_url from t_commodity_brand
+        <where>
+            <if test="searchBrandName != null and searchBrandName != ''">
+                brand_name like CONCAT(CONCAT('%',#{searchBrandName}),'%')
+            </if>
+        </where>
+        limit #{begin},#{pageSize}
+    </select>
+
+    <select id="queryBrandsTotalCount" resultType="int" parameterType="map">
+        select count(*) from t_commodity_brand
+        <where>
+            <if test="searchBrandName != null and searchBrandName != ''">
+                brand_name like CONCAT(CONCAT('%',#{searchBrandName}),'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="isBrandExistByBrandCode" resultType="int">
+        select count(brand_code) from t_commodity_brand where brand_code=#{brandCode}
+    </select>
+
+    <insert id="addBrand" parameterType="brand">
+        insert into t_commodity_brand(brand_code, brand_name, brand_url, brand_img_url)
+        VALUES (#{brandCode},#{brandName},#{brandUrl},#{brandImgUrl})
+    </insert>
+
+    <select id="queryBrandByBrandCode" resultMap="BrandCommodity">
+        select tcb.brand_code, tcb.brand_name, tcb.brand_url, tcb.brand_img_url,
+               tc.commodity_code, tc.commodity_name, tc.specification, tc.model, tc.unit,
+               tc.market_price, tc.sales_price, tc.cost_price, tc.commodity_url, tc.commodity_introduce,
+               tc.inventory_count
+        from t_commodity_brand as tcb
+        left join t_commodity tc on tcb.brand_code = tc.brand_code
+        where tcb.brand_code=#{brandCode}
+    </select>
+    <resultMap id="BrandCommodity" type="brand">
+        <id property="brandCode" column="brand_code"/>
+        <result property="brandName" column="brand_name"/>
+        <result property="brandUrl" column="brand_url"/>
+        <result property="brandImgUrl" column="brandImgUrl"/>
+        <collection property="commodities" ofType="commodity">
+            <id property="commodityCode" column="commodity_code"/>
+            <result property="commodityName" column="commodity_name"/>
+            <result property="specification" column="specification"/>
+            <result property="model" column="model"/>
+            <result property="unit" column="unit"/>
+            <result property="marketPrice" column="market_price"/>
+            <result property="salesPrice" column="sales_price"/>
+            <result property="costPrice" column="cost_price"/>
+            <result property="commodityUrl" column="commodity_url"/>
+            <result property="commodityIntroduce" column="commodity_introduce"/>
+            <result property="inventoryCount" column="inventory_count"/>
+        </collection>
+    </resultMap>
+
+    <select id="queryAllBrands" resultType="brand">
+        select brand_code,brand_name from t_commodity_brand
+    </select>
+
+    <select id="queryAllCounts" resultType="int">
+        select count(*) from t_commodity_brand
+    </select>
+
+</mapper>

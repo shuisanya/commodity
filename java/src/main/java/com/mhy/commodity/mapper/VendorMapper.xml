@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mhy.commodity.mapper.VendorMapper">
+
+    <select id="queryVendors" resultType="vendor" parameterType="map">
+        select vendor_code, vendor_name, contact, phone, brief_introduction, vendor_url
+        from t_commodity_vendor
+        <where>
+            <if test="searchVendorName != null and searchVendorName != ''">
+                vendor_name like CONCAT(CONCAT('%',#{searchVendorName}),'%')
+            </if>
+        </where>
+        limit #{begin},#{pageSize}
+    </select>
+
+    <select id="queryVendorsTotalCount" parameterType="map" resultType="int">
+        select count(*) from t_commodity_vendor
+        <where>
+            <if test="searchVendorName != null and searchVendorName != ''">
+                vendor_name like CONCAT(CONCAT('%',#{searchVendorName}),'%')
+            </if>
+        </where>
+    </select>
+
+
+    <select id="queryVendorByVendorCode" resultMap="vendorCommodity">
+        select tcv.vendor_code,tcv.vendor_name,tcv.contact,tcv.phone,tcv.brief_introduction,tcv.vendor_url,
+        tc.commodity_code,tc.commodity_name,tc.commodity_introduce,tc.commodity_url,tc.cost_price,tc.inventory_count,
+        tc.market_price,tc.model,tc.sales_price,tc.specification,tc.unit
+        from t_commodity_vendor as tcv
+        left join commodity_with_vendor cwv on tcv.vendor_code = cwv.vendor_code
+        left join t_commodity tc on cwv.commodity_code = tc.commodity_code
+        where tcv.vendor_code=#{vendorCode}
+    </select>
+    <resultMap id="vendorCommodity" type="vendor">
+        <id property="vendorCode" column="vendor_code"/>
+        <result property="vendorName" column="vendor_name"/>
+        <result property="contact" column="contact"/>
+        <result property="phone" column="phone"/>
+        <result property="briefIntroduction" column="brief_introduction"/>
+        <result property="vendorUrl" column="vendor_url"/>
+        <collection property="commodities" ofType="commodity">
+            <id property="commodityCode" column="commodity_code"/>
+            <result property="commodityName" column="commodity_name"/>
+            <result property="specification" column="specification"/>
+            <result property="model" column="model"/>
+            <result property="unit" column="unit"/>
+            <result property="marketPrice" column="market_price"/>
+            <result property="salesPrice" column="sales_price"/>
+            <result property="costPrice" column="cost_price"/>
+            <result property="commodityUrl" column="commodity_url"/>
+            <result property="commodityIntroduce" column="commodity_introduce"/>
+            <result property="inventoryCount" column="inventory_count"/>
+        </collection>
+    </resultMap>
+
+    <insert id="addVendor" parameterType="vendor">
+        insert into t_commodity_vendor(vendor_code, vendor_name, contact, phone, brief_introduction, vendor_url)
+        values (#{vendorCode},#{vendorName},#{contact},#{phone},#{briefIntroduction},#{vendorUrl})
+    </insert>
+
+
+    <select id="isVendorExistByVendorCode" resultType="int">
+        select count(vendor_code) from t_commodity_vendor where vendor_code=#{vendorCode}
+    </select>
+
+    <update id="updateVendor">
+        update t_commodity_vendor set
+                vendor_name=#{vendorName},
+                contact=#{contact},
+                vendor_url=#{vendorUrl},
+                brief_introduction=#{briefIntroduction},
+                phone=#{phone}
+        where vendor_code=#{vendorCode}
+    </update>
+
+    <insert id="addVendorWithCommodities">
+        insert into commodity_with_vendor(commodity_code, vendor_code) values
+        <foreach collection="commoditiesCode" item="commodityCode" index="index" separator=",">
+            (#{commodityCode},#{vendorCode})
+        </foreach>
+    </insert>
+
+    <delete id="deleteVendorCommodity">
+        delete from commodity_with_vendor where vendor_code=#{vendorCode} and commodity_code=#{commodityCode}
+    </delete>
+
+    <select id="queryAllVendors" resultType="vendor">
+        select vendor_code,vendor_name from t_commodity_vendor
+    </select>
+
+    <select id="queryAllCounts" resultType="int">
+        select count(*) from t_commodity_vendor
+    </select>
+</mapper>

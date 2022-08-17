@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mhy.commodity.mapper.OrderMapper">
+
+<!--    <select id="queryAllOrderByUserCode" resultType="order">-->
+<!--        select order_code,zip,order_time,order_amount from t_order-->
+<!--        where user_code=#{userCode}-->
+<!--    </select>-->
+
+    <select id="queryAllOrderByUserCode" resultMap="OrderCommodity">
+        SELECT m.order_code,m.zip,m.order_time,m.order_amount,
+               q.details_code,q.unit_price,q.count,q.amount,q.order_state,q.shipping_time,
+               p.commodity_code,p.commodity_name,p.specification,p.model,p.unit,p.market_price,p.sales_price,p.cost_price,p.commodity_url,p.commodity_introduce,p.inventory_count
+        FROM t_order AS m LEFT JOIN t_order_details AS q ON m.order_code = q.order_code
+                          LEFT JOIN t_commodity AS p ON q.commodity_code = p.commodity_code
+        where user_code=#{userCode}
+    </select>
+    <resultMap id="OrderCommodity" type="Order">
+        <id property="orderCode" column="order_code"/>
+        <result property="zip" column="zip"/>
+        <result property="orderTime" column="order_time"/>
+        <result property="orderAmount" column="order_amount"/>
+        <collection property="orderDetails" ofType="OrderDetails">
+            <id property="detailsCode" column="details_code"/>
+            <result property="unitPrice" column="unit_price"/>
+            <result property="count" column="count"/>
+            <result property="amount" column="amount"/>
+            <result property="orderState" column="order_state"/>
+            <result property="shippingTime" column="shipping_time"/>
+            <collection property="commodity" ofType="Commodity">
+                <id property="commodityCode" column="commodity_code"/>
+                <result property="commodityName" column="commodity_name"/>
+                <result property="specification" column="specification"/>
+                <result property="model" column="model"/>
+                <result property="unit" column="unit"/>
+                <result property="marketPrice" column="market_price"/>
+                <result property="salesPrice" column="sales_price"/>
+                <result property="costPrice" column="cost_price"/>
+                <result property="commodityUrl" column="commodity_url"/>
+                <result property="commodityIntroduce" column="commodity_introduce"/>
+                <result property="inventoryCount" column="inventory_count"/>
+            </collection>
+        </collection>
+    </resultMap>
+
+
+    <select id="queryOrdersCount" resultType="int" parameterType="map">
+        select count(*) from t_order
+        <where>
+            <if test="minPrice != null and minPrice != '' and maxPrice != null and maxPrice != ''">
+                order_amount BETWEEN #{minPrice} AND #{maxPrice}
+            </if>
+            <if test="startTime != null and startTime != '' and endTime != null and endTime != ''">
+                and order_time BETWEEN #{startTime} AND #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryOrders" resultType="order" parameterType="map">
+        SELECT order_code,zip,order_time,order_amount
+        FROM t_order
+        <where>
+            <if test="minPrice != null and minPrice != '' and maxPrice != null and maxPrice != ''">
+                order_amount BETWEEN #{minPrice} AND #{maxPrice}
+            </if>
+             <if test="startTime != null and startTime != '' and endTime != null and endTime != ''">
+                and order_time BETWEEN #{startTime} AND #{endTime}
+            </if>
+        </where>
+        limit #{begin},#{pageSize}
+    </select>
+
+    <select id="queryOrderDetailsByOrderCode" resultMap="OrderDetailCommodity">
+        SELECT m.order_code,m.zip,m.order_time,m.order_amount,
+               q.details_code,q.unit_price,q.count,q.amount,q.order_state,q.shipping_time,
+               p.commodity_code,p.commodity_name,p.specification,p.model,p.unit,p.market_price,p.sales_price,p.cost_price,p.commodity_url,p.commodity_introduce,p.inventory_count
+        FROM t_order AS m LEFT JOIN t_order_details AS q ON m.order_code = q.order_code
+                          LEFT JOIN t_commodity AS p ON q.commodity_code = p.commodity_code
+        where q.order_code=#{orderCode}
+    </select>
+    <resultMap id="OrderDetailCommodity" type="order">
+        <id property="orderCode" column="order_code"/>
+        <result property="zip" column="zip"/>
+        <result property="orderTime" column="order_time"/>
+        <result property="orderAmount" column="order_amount"/>
+        <collection property="orderDetails" ofType="OrderDetails">
+            <id property="detailsCode" column="details_code"/>
+            <result property="unitPrice" column="unit_price"/>
+            <result property="count" column="count"/>
+            <result property="amount" column="amount"/>
+            <result property="orderState" column="order_state"/>
+            <result property="shippingTime" column="shipping_time"/>
+            <collection property="commodity" ofType="Commodity">
+                <id property="commodityCode" column="commodity_code"/>
+                <result property="commodityName" column="commodity_name"/>
+                <result property="specification" column="specification"/>
+                <result property="model" column="model"/>
+                <result property="unit" column="unit"/>
+                <result property="marketPrice" column="market_price"/>
+                <result property="salesPrice" column="sales_price"/>
+                <result property="costPrice" column="cost_price"/>
+                <result property="commodityUrl" column="commodity_url"/>
+                <result property="commodityIntroduce" column="commodity_introduce"/>
+                <result property="inventoryCount" column="inventory_count"/>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <update id="shippingOrderDetailByDetailCode">
+        update t_order_details
+        set order_state = 1,shipping_time = #{shippingTime}
+        where details_code = #{detailCode}
+    </update>
+
+    <select id="queryAllCounts" resultType="int">
+        select count(*) from t_order;
+    </select>
+
+</mapper>
